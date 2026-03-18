@@ -82,9 +82,15 @@ export default function App() {
       setLogs([newEntry, ...logs]);
       setInput('');
       showStatus('success', `已新增：${nutrition.foodName}`);
-    } catch (error) {
+
+      // 自動同步到 Google Sheets
+      if (googleTokens && spreadsheetId) {
+        await syncToSheets(newEntry);
+      }
+    } catch (error: any) {
       console.error(error);
-      showStatus('error', '估算失敗，請稍後再試。');
+      const errorMsg = error.message || '估算失敗，請稍後再試。';
+      showStatus('error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -232,7 +238,7 @@ export default function App() {
               />
             </div>
             <p className="text-[10px] text-emerald-600/70">
-              * 請確保您的試算表第一行包含：日期, 食物, 熱量, 蛋白質, 脂肪, 碳水
+              * 請確保您的試算表第一行包含：日期, 食物, 熱量, 蛋白質, 脂肪, 碳水。系統將在新增記錄時自動同步。
             </p>
           </motion.div>
         )}
@@ -285,15 +291,33 @@ export default function App() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">今日記錄</h2>
-            <button 
-              onClick={() => {
-                if (confirm('確定要清除所有記錄嗎？')) setLogs([]);
-              }}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1"
-            >
-              <Trash2 size={12} />
-              清除
-            </button>
+            <div className="flex items-center gap-3">
+              {googleTokens && logs.length > 0 && (
+                <button 
+                  onClick={async () => {
+                    setLoading(true);
+                    for (const log of logs) {
+                      await syncToSheets(log);
+                    }
+                    setLoading(false);
+                    showStatus('success', '所有記錄已嘗試同步');
+                  }}
+                  className="text-xs text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1"
+                >
+                  <Save size={12} />
+                  同步全部
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  if (confirm('確定要清除所有記錄嗎？')) setLogs([]);
+                }}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                <Trash2 size={12} />
+                清除
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
