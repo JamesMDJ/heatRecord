@@ -1,0 +1,5 @@
+{
+  "name": "AI 營養熱量記錄助手",
+  "description": "使用 AI 自動估算食物熱量與營養，並同步至 Google Sheets 的健康管理工具。",
+  "requestFramePermissions": []
+}
